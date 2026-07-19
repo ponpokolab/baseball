@@ -257,4 +257,175 @@ html = f"""<!DOCTYPE html>
 </div></body></html>"""
 
 open("index.html", "w", encoding="utf-8").write(html)
+
+# ---- お父さん用スワイプ版 app.html(大谷+相撲+天気)2026-07-19 ----
+# 天気の地点: 東京(変更はWX_LAT/WX_LONを書き換え)
+WX_LAT, WX_LON, WX_NAME = 35.68, 139.76, "東京"
+wx_html = ""
+try:
+    w = get_json(f"https://api.open-meteo.com/v1/forecast?latitude={WX_LAT}&longitude={WX_LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=Asia%2FTokyo&forecast_days=1")
+    dd = w["daily"]
+    code_map = {0:"晴れ☀",1:"だいたい晴れ☀",2:"ときどき曇り⛅",3:"曇り☁",45:"霧",48:"霧",51:"小雨🌂",53:"小雨🌂",55:"雨☔",61:"雨☔",63:"雨☔",65:"大雨☔",80:"にわか雨🌂",81:"にわか雨☔",82:"大雨☔",95:"雷雨⚡"}
+    wmark = code_map.get(dd["weather_code"][0], "")
+    hi, lo, pp = dd["temperature_2m_max"][0], dd["temperature_2m_min"][0], dd["precipitation_probability_max"][0]
+    advice = "暑いので水分を🍵" if hi >= 30 else ("上着があると安心です" if hi < 18 else "すごしやすい一日です")
+    wx_html = f'<div class="hbig">{wmark}</div><div class="hmid">最高 {hi:.0f}度 / 最低 {lo:.0f}度</div><div class="hmid">雨のかくりつ {pp}%</div><div class="hmid" style="color:#1565c0;margin-top:10px">{advice}</div>'
+except Exception:
+    wx_html = '<div class="hmid">天気を取得できませんでした</div>'
+
+# 相撲: 場所中なら前日(または当日)の幕内上位の結果
+sumo_html = ""
+try:
+    now = datetime.now(JST)
+    basho_id = None
+    for bid, start in (("202607", "2026-07-12"), ("202609", "2026-09-13")):
+        s = datetime.fromisoformat(start).replace(tzinfo=JST)
+        if s <= now <= s + timedelta(days=15):
+            basho_id, day = bid, min(15, (now - s).days + 1)
+    if basho_id:
+        tk = get_json(f"https://www.sumo-api.com/api/basho/{basho_id}/torikumi/Makuuchi/{day}")
+        rows = []
+        for m in (tk.get("torikumi") or [])[-6:]:
+            e, w2 = m.get("eastShikona",""), m.get("westShikona","")
+            win = m.get("winnerEn") or ""
+            if win:
+                wj = e if win == m.get("eastShikona") else w2
+                rows.append(f"<tr><td>{e} × {w2}</td><td><b>○{wj}</b></td></tr>")
+            else:
+                rows.append(f"<tr><td>{e} × {w2}</td><td>これから</td></tr>")
+        sumo_html = f'<div class="hmid">名古屋場所 {day}日目</div><table>{"".join(rows)}</table>'
+    else:
+        sumo_html = '<div class="hmid">いまは場所と場所のあいだです<br>次の場所をおたのしみに</div>'
+except Exception:
+    sumo_html = '<div class="hmid">相撲の情報を取得できませんでした</div>'
+
+now_m = datetime.now(JST).month
+now_wd = datetime.now(JST).weekday()
+
+# 家庭菜園: 月別作業ヒント(自作データ・毎月自動で切替)
+SAIEN = {
+ 1:"寒おこし(畑を掘って寒さに当てる)/植える: 絹さやの支柱直し",
+ 2:"じゃがいもの種いも準備/土づくりに石灰をまく",
+ 3:"じゃがいも植え付け/レタス・小松菜の種まき",
+ 4:"夏野菜(トマト・なす・きゅうり)の苗を植える/霜に注意",
+ 5:"支柱立てと誘引/わき芽かき開始/水やりは朝",
+ 6:"梅雨の病気予防(風通しをよく)/追肥を忘れずに",
+ 7:"トマトのわき芽かき/水やりは朝夕の涼しい時間に/雑草取りは涼しい日に",
+ 8:"秋野菜の準備(にんじん種まき)/朝の水やりが大事/台風対策",
+ 9:"大根・かぶ・ほうれん草の種まき/白菜の苗植え",
+ 10:"玉ねぎの植え付け準備/さつまいも収穫",
+ 11:"玉ねぎ苗の植え付け/えんどうの種まき",
+ 12:"畑の片づけと土づくり/絹さやの防寒",
+}
+saien_html = f'<div class="hmid">{now_m}月の畑しごと</div><div class="hmid" style="margin-top:10px;text-align:left;font-size:26px">' + "<br>・".join(["・"+SAIEN[now_m]] if False else ("・"+SAIEN[now_m]).split("/")) + "</div>"
+
+# 健康ひとこと: 気温連動+曜日の一般アドバイス(医療アドバイスはしない)
+try:
+    _hi = hi
+except NameError:
+    _hi = 25
+if _hi >= 33: kenko = "きけんな暑さです。外の仕事はやめて、エアコンと水分を。"
+elif _hi >= 30: kenko = "暑い日です。畑や散歩は朝のうちに。こまめに水分を。"
+elif _hi < 10: kenko = "冷えこみます。あたたかくして、お風呂の温度差に気をつけて。"
+else: kenko = "すごしやすい気温です。散歩びよりです。"
+weekly = {0:"週のはじまり。ラジオ体操からどうぞ",1:"ストレッチで肩と腰をのばす日",2:"きょうは歩数を気にしてみる日",3:"ゆっくりお風呂の日",4:"好きなものを食べていい日",5:"家族に電話してみる日",6:"ゆっくり休む日"}
+kenko_html = f'<div class="hmid">{kenko}</div><div class="hmid" style="color:#1565c0;margin-top:14px">{weekly[now_wd]}</div>'
+
+
+# ---- 日めくり動画(偶然の法則: たまたまの出会いを毎日製造。寅さんの法則: 今日の分だけ) ----
+MEGURI_CH = {
+  "いぬ": ["UC93O_mvkSvPHQDqPMJbl9Aw", "UCGr2Xt-YPhJ0HcHt6oJvyLg", "UCMMhK-o0Txrl_a7ta4YvuQQ", "UCgjULi89KwwEFcYHvsDRyXw"],
+  "はたけの動画": ["UCCnJI0bngVas3kDgC-um6og"],
+  "おすもうの動画": ["UC80hf_CYCu3mm841BibQQTQ"],
+}
+try:
+    seen = set(json.load(open("seen_videos.json", encoding="utf-8")))
+except Exception:
+    seen = set()
+import random as _rnd
+_rnd.seed(datetime.now(JST).strftime("%Y%m%d"))
+meguri_cards = []
+new_seen = set(seen)
+for theme, cids in MEGURI_CH.items():
+    pool = []
+    for cid in cids:
+        try:
+            rss = get(f"https://www.youtube.com/feeds/videos.xml?channel_id={cid}")
+            r = ET.fromstring(rss)
+            ns = {"a": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
+            for e in r.findall("a:entry", ns):
+                vid = e.findtext("yt:videoId", "", ns)
+                title = e.findtext("a:title", "", ns)
+                if vid and vid not in seen:
+                    pool.append((vid, title))
+        except Exception:
+            continue
+    if pool:
+        vid, title = _rnd.choice(pool)
+        new_seen.add(vid)
+        label = "きょうの" + ("わんちゃん" if theme == "いぬ" else theme)
+        meguri_cards.append((label,
+            f'''<a class="vidbig" href="https://www.youtube.com/watch?v={vid}" target="_blank">
+            <img src="https://i.ytimg.com/vi/{vid}/hqdefault.jpg" alt="">
+            <span class="vt2">{title}</span>
+            <span class="tap">▶ 押すと見られます</span></a>
+            <div class="once">きょうだけの1本です(あしたは別の動画)</div>'''))
+json.dump(sorted(new_seen), open("seen_videos.json", "w", encoding="utf-8"))
+
+def _card(label, body):
+    return f'<section class="cardp"><div class="lab">{label}</div>{body}</section>'
+
+vids_app = ""
+for pub, title, vid, chname, _p in vids[:3]:
+    vids_app += (f'<a class="vid" href="https://www.youtube.com/watch?v={vid}" target="_blank">'
+                 f'<img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy">'
+                 f'<span class="vt">{title}</span></a>')
+cards = [
+    _card("きょうの天気(" + WX_NAME + ")", wx_html),
+    _card(f"{gdate}の大谷さん", f'<div class="hbig" style="color:{color}">{headline}</div><div class="hmid">{line}</div>'),
+    _card("大谷さんの今シーズン", f'<div class="hmid">ホームラン</div><div class="hbig">{season_hr}本</div><div class="hmid">打率 {season_avg} / 打点 {season_rbi}</div>'),
+    _card("おすもう", sumo_html),
+    _card("はたけ・家庭菜園", saien_html),
+    _card("きょうの健康ひとこと", kenko_html),
+] + [_card(lb, bd) for lb, bd in meguri_cards] + [
+    _card("これからの試合(日本時間)", f"<table>{week_html}</table>"),
+    _card("さいしんの動画(押すと再生)", vids_app or '<div class="hmid">探しています</div>'),
+    _card("きょうのニュース", news_html),
+]
+app_html = f"""<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>大谷さんと天気</title>
+<style>
+  body {{ margin:0; font-family:"Hiragino Sans","Yu Gothic",Meiryo,sans-serif; color:#222; }}
+  .snap {{ height:100dvh; overflow-y:scroll; scroll-snap-type:y mandatory; }}
+  .cardp {{ height:100dvh; scroll-snap-align:start; display:flex; flex-direction:column;
+           justify-content:center; padding:22px; box-sizing:border-box; border-bottom:4px solid #eee; background:#fffdf7; }}
+  .lab {{ font-size:26px; color:#888; text-align:center; margin-bottom:12px; }}
+  .hbig {{ font-size:56px; font-weight:bold; text-align:center; margin:6px 0; }}
+  .hmid {{ font-size:30px; text-align:center; line-height:1.6; }}
+  table {{ width:100%; border-collapse:collapse; font-size:23px; }}
+  td {{ padding:9px 4px; border-bottom:1px solid #eee; }}
+  .news {{ display:block; font-size:23px; padding:11px 0; color:#1565c0; text-decoration:none; border-bottom:1px solid #eee; }}
+  .vid {{ display:flex; gap:12px; align-items:center; text-decoration:none; color:#222; padding:10px 0; border-bottom:1px solid #eee; }}
+  .vid img {{ width:150px; border-radius:10px; }}
+  .vt {{ font-size:20px; line-height:1.4; }}
+  .vidbig {{ display:block; text-decoration:none; color:#222; text-align:center; }}
+  .vidbig img {{ width:100%; border-radius:14px; }}
+  .vt2 {{ display:block; font-size:24px; line-height:1.5; margin-top:8px; }}
+  .tap {{ display:block; font-size:26px; color:#fff; background:#c62828; border-radius:14px; padding:12px; margin-top:10px; }}
+  .once {{ text-align:center; color:#888; font-size:19px; margin-top:10px; }}
+  .hint {{ position:fixed; bottom:8px; left:0; right:0; text-align:center; color:#bbb; font-size:17px; pointer-events:none; }}
+</style></head><body>
+<div class="snap">
+{"".join(cards)}
+<section class="cardp"><div class="lab">おしまい</div><div class="hmid">下へスライドすると<br>もどれます</div><div class="hmid" style="color:#888;margin-top:18px;font-size:20px">{updated} こうしん</div></section>
+</div>
+<div class="hint">⬆ 上にスライドすると次のページ</div>
+</body></html>"""
+open("app.html", "w", encoding="utf-8").write(app_html)
+print("app.html 出力OK(カード", len(cards)+1, "枚)")
+
+
+
 print(f"生成OK: {gdate} {headline} / 予定{len(week_rows)}試合 / 他選手{len(others_rows)}人 / ニュース{'OK' if 'news' in news_html else '取得済'}")
