@@ -79,6 +79,41 @@ try:
 except Exception as e:
     news_html = "<div>ニュースを取得できませんでした</div>"
 
+# ---- YouTube動画サムネイル(チャンネルRSS・APIキー不要) ----
+YT_CHANNELS = [
+    ("MLB公式", "UCoLrcjPV5PbUrUyXq5mjc_A"),
+    ("ドジャース公式", "UC05cNJvMKzDLRPo59X2Xx7g"),
+    # 現地ファンのチャンネルを足すときはここに ("表示名", "チャンネルID") を追記
+]
+OHTANI_WORDS = ("ohtani", "shohei", "大谷")
+vids = []
+for chname, cid in YT_CHANNELS:
+    try:
+        rss = get(f"https://www.youtube.com/feeds/videos.xml?channel_id={cid}")
+        r = ET.fromstring(rss)
+        ns = {"a": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
+        for e in r.findall("a:entry", ns):
+            title = e.findtext("a:title", "", ns)
+            vid = e.findtext("yt:videoId", "", ns)
+            pub = e.findtext("a:published", "", ns)
+            if not vid:
+                continue
+            tl = title.lower()
+            if any(w in tl for w in OHTANI_WORDS):
+                vids.append((pub, title, vid, chname, 0))
+            elif "highlight" in tl and "dodgers" in tl:
+                vids.append((pub, title, vid, chname, 1))  # 大谷が少ない日の補欠(試合ハイライト)
+    except Exception:
+        continue
+# 新しい順に並べ、大谷本人の動画(優先度0)を先頭グループに
+vids.sort(key=lambda v: v[0], reverse=True)
+vids.sort(key=lambda v: v[4])
+vids_html = ""
+for pub, title, vid, chname, _p in vids[:6]:
+    vids_html += f'''<a class="vid" href="https://www.youtube.com/watch?v={vid}" target="_blank">
+      <img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy">
+      <span class="vt">{title}</span><span class="vc">{chname}</span></a>\n'''
+
 # ---- 他の日本人メジャーリーガー ----
 PLAYERS = ["Yoshinobu Yamamoto", "Roki Sasaki", "Shota Imanaga", "Seiya Suzuki",
            "Yu Darvish", "Kodai Senga", "Masataka Yoshida"]
@@ -162,6 +197,11 @@ html = f"""<!DOCTYPE html>
           margin: 8px 0; }}
   .btn.red {{ background: #c62828; }}
   .foot {{ text-align: center; color: #999; font-size: 15px; }}
+  .vid {{ display: flex; gap: 10px; align-items: center; text-decoration: none;
+          color: #222; padding: 8px 0; border-bottom: 1px solid #eee; }}
+  .vid img {{ width: 148px; border-radius: 10px; flex-shrink: 0; }}
+  .vt {{ font-size: 17px; line-height: 1.4; display: block; }}
+  .vc {{ font-size: 14px; color: #999; display: block; margin-left: 6px; }}
 </style></head><body><div class="wrap">
   <h1>⚾ 今日の大谷さん</h1>
   <div class="date">{updated} 更新</div>
@@ -202,8 +242,9 @@ html = f"""<!DOCTYPE html>
   </div>
 
   <div class="card">
-    <div class="label">動画・話題</div>
-    <a class="btn red" href="{yt}" target="_blank">▶ YouTubeでハイライトを見る</a>
+    <div class="label">大谷さんの最新動画(押すと再生)</div>
+    {vids_html if vids_html else '<p style="font-size:18px;text-align:center">新しい動画を探しています</p>'}
+    <a class="btn red" href="{yt}" target="_blank">▶ もっとYouTubeで見る</a>
     <a class="btn" href="{xs}" target="_blank">💬 Xでみんなの反応を見る</a>
   </div>
 
