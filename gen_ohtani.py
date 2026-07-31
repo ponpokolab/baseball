@@ -5,10 +5,30 @@ MLB公式スタッツAPI+Google News RSSから自動生成。毎日の定時実�
 import io, sys, json, urllib.request, urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 JST = timezone(timedelta(hours=9))
 OHTANI = 660271
+
+# ---- 米国東部時間(ET) ----
+# MLBの「1日」は米東部時間で区切られる。日本の朝に実行すると米国では前日の試合が
+# 終わった直後なので、ETの日付を基準に「どの日の成績まで反映済みか」を判定する。
+def us_eastern_now():
+    utc = datetime.now(timezone.utc)
+    y = utc.year
+    # 夏時間: 3月第2日曜 2:00 〜 11月第1日曜 2:00(現地時間)
+    mar1 = datetime(y, 3, 1, tzinfo=timezone.utc)
+    dst_start = mar1 + timedelta(days=(6 - mar1.weekday()) % 7 + 7, hours=7)   # 2:00 EST = 7:00 UTC
+    nov1 = datetime(y, 11, 1, tzinfo=timezone.utc)
+    dst_end = nov1 + timedelta(days=(6 - nov1.weekday()) % 7, hours=6)         # 2:00 EDT = 6:00 UTC
+    offset = -4 if dst_start <= utc < dst_end else -5
+    return utc.astimezone(timezone(timedelta(hours=offset)))
+
+ET_NOW = us_eastern_now()
+# ETでまだ試合中の時間帯(〜翌3時)は「前日分まで確定」とみなす
+STATS_DATE_ET = (ET_NOW - timedelta(hours=3)).date()
+SEASON = STATS_DATE_ET.year
 
 # ポンポコ系列サイト相互リンク(URLは決まり次第ここに入れるだけ。空のものはフッターから自動で省かれる)
 SISTER_SITES = [
@@ -30,7 +50,7 @@ def sister_footer_html():
 # シニアも見るサイトなので他系列サイトより一回り大きめの文字サイズ
 SISTER_CSS = """
   .sister-footer { max-width:560px; margin:24px auto 0; padding:18px 14px 0; border-top:1px solid #e0e0e0;
-    text-align:center; font-size:16px; color:#888; }
+    text-align:center; font-size:16px; color:#5c5c5c; }
   .sister-footer .sister-label { display:block; margin-bottom:10px; font-weight:bold; font-size:17px; }
   .sister-footer a { color:#1565c0; margin:0 10px; text-decoration:underline; line-height:2.2; }
 """
@@ -100,7 +120,13 @@ try:
     for it in items:
         title = it.findtext("title", "")
         link = it.findtext("link", "")
-        news_html += f'<a class="news" href="{link}" target="_blank">・{title}</a>\n'
+        when = ""
+        try:
+            pt = parsedate_to_datetime(it.findtext("pubDate", "")).astimezone(JST)
+            when = f'<span class="ntime">{pt.month}月{pt.day}日 {pt.hour}時{pt.minute:02d}分 配信</span>'
+        except Exception:
+            pass
+        news_html += f'<a class="news" href="{link}" target="_blank">・{title}{when}</a>\n'
 except Exception as e:
     news_html = "<div>ニュースを取得できませんでした</div>"
 
@@ -108,6 +134,9 @@ except Exception as e:
 YT_CHANNELS = [
     ("MLB公式", "UCoLrcjPV5PbUrUyXq5mjc_A"),
     ("ドジャース公式", "UC05cNJvMKzDLRPo59X2Xx7g"),
+    ("MLB Japan", "UCJrBiHVYO_jiFU1avGUCm3w"),
+    ("SPOTV NOW", "UCJ-l-sMQFHogSy8KXRyMIRA"),
+    ("MLB Network", "UCnfdlSStduhKXE9Qp9-edsA"),
     # 現地ファンのチャンネルを足すときはここに ("表示名", "チャンネルID") を追記
 ]
 OHTANI_WORDS = ("ohtani", "shohei", "大谷")
@@ -126,18 +155,45 @@ for chname, cid in YT_CHANNELS:
             tl = title.lower()
             if any(w in tl for w in OHTANI_WORDS):
                 vids.append((pub, title, vid, chname, 0))
-            elif "highlight" in tl and "dodgers" in tl:
-                vids.append((pub, title, vid, chname, 1))  # 大谷が少ない日の補欠(試合ハイライト)
+            elif ("highlight" in tl and "dodgers" in tl) or "日本人" in tl:
+                vids.append((pub, title, vid, chname, 1))  # 大谷が少ない日の補欠(試合ハイライト・日本人特集)
     except Exception:
         continue
 # 新しい順に並べ、大谷本人の動画(優先度0)を先頭グループに
 vids.sort(key=lambda v: v[0], reverse=True)
 vids.sort(key=lambda v: v[4])
 vids_html = ""
-for pub, title, vid, chname, _p in vids[:6]:
-    vids_html += f'''<a class="vid" href="https://www.youtube.com/watch?v={vid}" target="_blank">
+for pub, title, vid, chname, _p in vids[:12]:
+    ptxt = ""
+    try:
+        pd = datetime.fromisoformat(pub).astimezone(JST)
+        ptxt = f"{pd.month}/{pd.day}"
+    except Exception:
+        pass
+    vids_html += f'''<a class="gvid" href="https://www.youtube.com/watch?v={vid}" target="_blank">
       <img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy">
-      <span class="vt">{title}</span><span class="vc">{chname}</span></a>\n'''
+      <span class="vt">{title}</span><span class="vc">{chname}{" ・ " + ptxt if ptxt else ""}</span></a>\n'''
+
+# ---- Xのみんなの反応(公式oEmbed埋め込み・APIキー不要) ----
+# X公式の検索取得は有料APIのみのため、載せたいポストのURLを x_posts.json に手で追記する方式。
+# 例: {"posts": ["https://x.com/MLB/status/123456789"]}
+# oEmbed(publish.twitter.com)は規約内の公式埋め込み手段。転載ではなくX公式の埋め込みコードを使う。
+x_embeds_html = ""
+x_embed_count = 0
+try:
+    xp = json.load(open("x_posts.json", encoding="utf-8"))
+    for post_url in xp.get("posts", [])[:8]:
+        try:
+            oe = get_json("https://publish.twitter.com/oembed?omit_script=true&lang=ja&url="
+                          + urllib.parse.quote(post_url, safe=""))
+            x_embeds_html += oe.get("html", "")
+            x_embed_count += 1
+        except Exception:
+            continue
+except FileNotFoundError:
+    pass
+if x_embeds_html:
+    x_embeds_html += '<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>'
 
 # ---- 他の日本人メジャーリーガー ----
 PLAYERS = ["Yoshinobu Yamamoto", "Roki Sasaki", "Shota Imanaga", "Seiya Suzuki",
@@ -155,7 +211,7 @@ for name in PLAYERS:
         pid = people[0]["id"]
         is_pitcher = people[0].get("primaryPosition", {}).get("abbreviation") == "P"
         grp = "pitching" if is_pitcher else "hitting"
-        sd = get_json(f"https://statsapi.mlb.com/api/v1/people/{pid}/stats?stats=season&group={grp}")
+        sd = get_json(f"https://statsapi.mlb.com/api/v1/people/{pid}/stats?stats=season&group={grp}&season={SEASON}")
         splits = sd["stats"][0]["splits"] if sd["stats"] else []
         if not splits:
             continue
@@ -168,6 +224,8 @@ for name in PLAYERS:
     except Exception:
         continue
 others_html = "\n".join(others_rows) if others_rows else "<tr><td>取得中</td></tr>"
+# アメリカの「1日」が終わったタイミング(米東部時間)を基準に、いつ時点の成績かを明記
+others_note = f"米国時間 {STATS_DATE_ET.month}月{STATS_DATE_ET.day}日 の試合終了分まで反映(日本の朝に更新すると前夜の米国の試合結果が入ります)"
 
 # ---- 元気なお年寄りコーナー(手動更新: genki.json があれば表示) ----
 genki_html = ""
@@ -203,7 +261,7 @@ html = f"""<!DOCTYPE html>
          background: #fffdf7; color: #222; line-height: 1.7; }}
   .wrap {{ max-width: 560px; margin: 0 auto; padding: 20px 14px 60px; }}
   h1 {{ font-size: 34px; text-align: center; margin: 8px 0 2px; }}
-  .date {{ text-align: center; color: #777; font-size: 18px; margin-bottom: 16px; }}
+  .date {{ text-align: center; color: #5c5c5c; font-size: 18px; margin-bottom: 16px; }}
   .card {{ background: #fff; border: 3px solid #e0e0e0; border-radius: 18px;
            padding: 20px; margin-bottom: 16px; }}
   .center {{ text-align: center; }}
@@ -222,12 +280,23 @@ html = f"""<!DOCTYPE html>
           margin: 8px 0; }}
   .btn.red {{ background: #c62828; }}
   .btn.green {{ background: #2e7d32; }}
-  .foot {{ text-align: center; color: #999; font-size: 15px; }}
+  .foot {{ text-align: center; color: #707070; font-size: 15px; }}
   .vid {{ display: flex; gap: 10px; align-items: center; text-decoration: none;
           color: #222; padding: 8px 0; border-bottom: 1px solid #eee; }}
   .vid img {{ width: 148px; border-radius: 10px; flex-shrink: 0; }}
   .vt {{ font-size: 17px; line-height: 1.4; display: block; }}
-  .vc {{ font-size: 14px; color: #999; display: block; margin-left: 6px; }}
+  .vc {{ font-size: 14px; color: #707070; display: block; margin-top: 2px; }}
+  .ntime {{ display: block; font-size: 14px; color: #707070; margin-left: 1em; }}
+  .vgrid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }}
+  .gvid {{ text-decoration: none; color: #222; display: block; }}
+  .gvid img {{ width: 100%; border-radius: 10px; display: block; }}
+  .gvid .vt {{ font-size: 15px; margin-top: 4px; }}
+  .xembeds {{ margin-top: 10px; }}
+  th {{ text-align: left; font-size: 14px; color: #707070; padding: 4px; border-bottom: 2px solid #ddd; }}
+  .note {{ font-size: 13px; color: #707070; }}
+  .tblnote {{ margin-top: 8px; text-align: center; }}
+  .mininote {{ font-size: 14px; color: #5c5c5c; text-align: center; margin: 4px 0 2px; }}
+  h2.sec {{ font-size: 26px; text-align: center; margin: 26px 0 10px; }}
 {SISTER_CSS}
 </style></head><body><div class="wrap">
   <h1>⚾ 今日の大谷さん</h1>
@@ -239,6 +308,11 @@ html = f"""<!DOCTYPE html>
     <div class="mid">{line}</div>
   </div>
 
+  <div class="card" style="border-color:#1565c0">
+    <div class="label" style="color:#1565c0; font-weight:bold">📅 これからの試合(日本時間)</div>
+    <table>{week_html}</table>
+  </div>
+
   <div class="card">
     <div class="label">今シーズンの成績</div>
     <div class="stats">
@@ -246,46 +320,38 @@ html = f"""<!DOCTYPE html>
       <div>打率<b>{season_avg}</b></div>
       <div>打点<b>{season_rbi}</b></div>
     </div>
-    <a class="btn green" href="seiseki.html">📊 大谷さんの全成績を見る</a>
+    <a class="btn green" href="#zenseiseki">📊 くわしい全成績はこのページの下へ</a>
   </div>
 
-  <div class="card">
-    <div class="label">これからの試合(日本時間)</div>
-    <table>{week_html}</table>
+  <div class="card" style="border-color:#c62828">
+    <div class="label" style="color:#c62828; font-weight:bold">🔥 大谷さんの動画とみんなの反応</div>
+    <div class="vgrid">
+    {vids_html if vids_html else '<p style="font-size:18px;text-align:center">新しい動画を探しています</p>'}
+    </div>
+    <a class="btn red" href="{yt}" target="_blank">▶ もっとYouTubeで見る</a>
+    <div class="xembeds">
+    {x_embeds_html}
+    </div>
+    <a class="btn" href="{xs}" target="_blank">💬 Xでみんなの反応をもっと見る</a>
   </div>
-
-  <div class="card">
-    <div class="label">試合はどこで見られる?</div>
-    <p style="font-size:18px; text-align:center; margin:6px 0 10px">
-      ドジャースの試合は、だいたい<b>NHK BS</b>か<b>ネット配信</b>で見られます
-    </p>
-    <a class="btn" href="{nhk}" target="_blank">📺 NHKの番組表を確認する</a>
-    <a class="btn" href="https://abema.tv/now-on-air/mlb" target="_blank">📱 ABEMAで見る(ネット)</a>
-    <a class="btn" href="https://www.spotvnow.jp/" target="_blank">🖥 SPOTV NOWで見る(ネット)</a>
-  </div>{genki_html}
 
   <div class="card">
     <div class="label">大谷さんのニュース</div>
     {news_html}
-  </div>
+  </div>{genki_html}
 
-  <div class="card">
-    <div class="label">大谷さんの最新動画(押すと再生)</div>
-    {vids_html if vids_html else '<p style="font-size:18px;text-align:center">新しい動画を探しています</p>'}
-    <a class="btn red" href="{yt}" target="_blank">▶ もっとYouTubeで見る</a>
-    <a class="btn" href="{xs}" target="_blank">💬 Xでみんなの反応を見る</a>
-  </div>
+<!--ZENSEISEKI-->
 
   <div class="card">
     <div class="label">日本人メジャーリーガーの成績</div>
     <table>{others_html}</table>
+    <div class="note tblnote">{others_note}</div>
   </div>
 
   <div class="foot">非公式のファン情報ページです / 成績: MLB公式データより自動取得</div>
   {sister_footer_html()}
-</div></body></html>"""
-
-open("index.html", "w", encoding="utf-8").write(html)
+</div><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": "be81dd55e4c042b09b9763edd4863484"}}'></script></body></html>"""
+# ※ index.html はこの後、全成績カードを差し込んでから書き出す(ファイル末尾参照)
 
 # ---- お父さん用スワイプ版 app.html(大谷+相撲+天気)2026-07-19 ----
 # 天気の地点: 東京(変更はWX_LAT/WX_LONを書き換え)
@@ -412,7 +478,7 @@ for pub, title, vid, chname, _p in vids[:3]:
 cards = [
     _card("きょうの天気(" + WX_NAME + ")", wx_html),
     _card(f"{gdate}の大谷さん", f'<div class="hbig" style="color:{color}">{headline}</div><div class="hmid">{line}</div>'),
-    _card("大谷さんの今シーズン", f'<div class="hmid">ホームラン</div><div class="hbig">{season_hr}本</div><div class="hmid">打率 {season_avg} / 打点 {season_rbi}</div><a class="golink" href="seiseki.html">📊 全成績を見る</a>'),
+    _card("大谷さんの今シーズン", f'<div class="hmid">ホームラン</div><div class="hbig">{season_hr}本</div><div class="hmid">打率 {season_avg} / 打点 {season_rbi}</div><a class="golink" href="index.html#zenseiseki">📊 全成績を見る</a>'),
     _card("おすもう", sumo_html),
     _card("はたけ・家庭菜園", saien_html),
     _card("きょうの健康ひとこと", kenko_html),
@@ -430,7 +496,7 @@ app_html = f"""<!DOCTYPE html>
   .snap {{ height:100dvh; overflow-y:scroll; scroll-snap-type:y mandatory; }}
   .cardp {{ height:100dvh; scroll-snap-align:start; display:flex; flex-direction:column;
            justify-content:center; padding:22px; box-sizing:border-box; border-bottom:4px solid #eee; background:#fffdf7; }}
-  .lab {{ font-size:26px; color:#888; text-align:center; margin-bottom:12px; }}
+  .lab {{ font-size:26px; color:#5c5c5c; text-align:center; margin-bottom:12px; }}
   .hbig {{ font-size:56px; font-weight:bold; text-align:center; margin:6px 0; }}
   .hmid {{ font-size:30px; text-align:center; line-height:1.6; }}
   table {{ width:100%; border-collapse:collapse; font-size:23px; }}
@@ -443,27 +509,27 @@ app_html = f"""<!DOCTYPE html>
   .vidbig img {{ width:100%; border-radius:14px; }}
   .vt2 {{ display:block; font-size:24px; line-height:1.5; margin-top:8px; }}
   .tap {{ display:block; font-size:26px; color:#fff; background:#c62828; border-radius:14px; padding:12px; margin-top:10px; }}
-  .once {{ text-align:center; color:#888; font-size:19px; margin-top:10px; }}
+  .once {{ text-align:center; color:#5c5c5c; font-size:19px; margin-top:10px; }}
   .golink {{ display:block; text-align:center; font-size:24px; color:#fff; background:#2e7d32; border-radius:14px; padding:12px; margin-top:16px; text-decoration:none; }}
   .hint {{ position:fixed; bottom:8px; left:0; right:0; text-align:center; color:#bbb; font-size:17px; pointer-events:none; }}
 {SISTER_CSS}
 </style></head><body>
 <div class="snap">
 {"".join(cards)}
-<section class="cardp"><div class="lab">おしまい</div><div class="hmid">下へスライドすると<br>もどれます</div><div class="hmid" style="color:#888;margin-top:18px;font-size:20px">{updated} こうしん</div>{sister_footer_html()}</section>
+<section class="cardp"><div class="lab">おしまい</div><div class="hmid">下へスライドすると<br>もどれます</div><div class="hmid" style="color:#5c5c5c;margin-top:18px;font-size:20px">{updated} こうしん</div>{sister_footer_html()}</section>
 </div>
 <div class="hint">⬆ 上にスライドすると次のページ</div>
-</body></html>"""
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": "be81dd55e4c042b09b9763edd4863484"}}'></script></body></html>"""
 open("app.html", "w", encoding="utf-8").write(app_html)
 print("app.html 出力OK(カード", len(cards)+1, "枚)")
 
 
 # ================================================================
-# ==== 全成績ページ (seiseki.html) 2026-07-20 ====
+# ==== 全成績(2026-07-24からトップページに統合) ====
 # MLB公式StatsAPIから状況別打率(statSplits)/月別(byMonth)/直近試合(gameLog)/
 # 投手成績(登板があれば)を取得。取得できなかった項目はページに載せない(捏造しない)。
 # ================================================================
-SEISEKI_SEASON = datetime.now(JST).year
+SEISEKI_SEASON = SEASON
 
 def _sd(st, key):
     v = st.get(key)
@@ -577,41 +643,13 @@ season_avg2, season_hr2, season_rbi2 = hit.get("avg", "-"), hit.get("homeRuns", 
 season_ops2, season_sb2 = hit.get("ops", "-"), hit.get("stolenBases", "-")
 seiseki_updated = datetime.now(JST).strftime("%Y年%m月%d日 %H:%M")
 
-seiseki_html = f"""<!DOCTYPE html>
-<html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>大谷翔平 全成績</title>
-<style>
-  body {{ font-family: "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif; margin: 0;
-         background: #fffdf7; color: #222; line-height: 1.7; }}
-  .wrap {{ max-width: 560px; margin: 0 auto; padding: 20px 14px 60px; }}
-  h1 {{ font-size: 32px; text-align: center; margin: 8px 0 2px; }}
-  .date {{ text-align: center; color: #777; font-size: 16px; margin-bottom: 16px; }}
-  .card {{ background: #fff; border: 3px solid #e0e0e0; border-radius: 18px;
-           padding: 20px; margin-bottom: 16px; }}
-  .label {{ font-size: 21px; color: #666; text-align: center; margin-bottom: 8px; }}
-  .stats {{ display: flex; justify-content: space-around; flex-wrap: wrap; }}
-  .stats div {{ font-size: 17px; color: #666; text-align: center; padding: 6px 4px; min-width: 30%; }}
-  .stats b {{ display: block; font-size: 28px; color: #222; }}
-  table {{ width: 100%; border-collapse: collapse; font-size: 17px; }}
-  table.mt {{ margin-top: 10px; }}
-  th {{ text-align: left; font-size: 14px; color: #999; padding: 4px; border-bottom: 2px solid #ddd; }}
-  td {{ padding: 8px 4px; border-bottom: 1px solid #eee; vertical-align: top; }}
-  .note {{ font-size: 13px; color: #999; }}
-  .tblnote {{ margin-top: 8px; text-align: center; }}
-  .mininote {{ font-size: 14px; color: #888; text-align: center; margin: 4px 0 2px; }}
-  .btn {{ display: block; text-align: center; font-size: 20px; background: #1565c0;
-          color: #fff; text-decoration: none; border-radius: 14px; padding: 12px;
-          margin: 6px 0; }}
-  .foot {{ text-align: center; color: #999; font-size: 14px; }}
-{SISTER_CSS}
-</style></head><body><div class="wrap">
-  <h1>⚾ 大谷翔平 全成績</h1>
-  <div class="date">{seiseki_updated} 時点のデータ(MLB公式StatsAPIより取得)</div>
+zenseiseki_cards = f"""
+  <h2 class="sec" id="zenseiseki">📊 大谷さんの全成績</h2>
+  <div class="date">{seiseki_updated} 時点(MLB公式StatsAPIより取得)</div>
 
   <div class="card">
     <div class="label">今シーズンの基本成績</div>
-    <div class="stats">
+    <div class="stats" style="flex-wrap:wrap">
       <div>打率<b>{season_avg2}</b></div>
       <div>本塁打<b>{season_hr2}本</b></div>
       <div>打点<b>{season_rbi2}</b></div>
@@ -646,14 +684,22 @@ seiseki_html = f"""<!DOCTYPE html>
     </table>
     <div class="note tblnote">最新の試合が一番上です。数字は「打数-安打」、Kは三振</div>
   </div>{pitch_card_html}
+"""
 
-  <a class="btn" href="index.html">⬅ 今日の大谷さんに戻る</a>
+# 全成績カードをトップページに差し込んで書き出す
+html = html.replace("<!--ZENSEISEKI-->", zenseiseki_cards)
+open("index.html", "w", encoding="utf-8").write(html)
 
-  <div class="foot">非公式のファン情報ページです / 成績: MLB公式データより自動取得({seiseki_updated})</div>
-  {sister_footer_html()}
-</div></body></html>"""
-
-open("seiseki.html", "w", encoding="utf-8").write(seiseki_html)
-print(f"seiseki.html 出力OK(状況別{len(sit_rows)}件 / 月別{len(month_rows)}件 / 試合ログ{len(gamelog_rows)}件 / 投手成績{'あり(' + str(len(pitch_rows)) + '登板)' if pitch_card_html else 'なし'})")
+# 旧URL(seiseki.html)へのブックマーク対策: トップの全成績セクションへ転送
+open("seiseki.html", "w", encoding="utf-8").write(
+    '<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">'
+    '<meta http-equiv="refresh" content="0; url=index.html#zenseiseki">'
+    '<title>移動しました</title></head><body>'
+    '<p style="font-family:sans-serif;font-size:20px;text-align:center;margin-top:40px">'
+    '全成績はトップページに引っ越しました。<a href="index.html#zenseiseki">こちらへどうぞ</a></p>'
+    "<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{\"token\": \"be81dd55e4c042b09b9763edd4863484\"}'></script>"
+    "</body></html>"
+)
+print(f"index.html 出力OK(全成績統合: 状況別{len(sit_rows)}件 / 月別{len(month_rows)}件 / 試合ログ{len(gamelog_rows)}件 / 投手成績{'あり(' + str(len(pitch_rows)) + '登板)' if pitch_card_html else 'なし'} / 動画{len(vids[:12])}本 / X埋め込み{x_embed_count}件)")
 
 print(f"生成OK: {gdate} {headline} / 予定{len(week_rows)}試合 / 他選手{len(others_rows)}人 / ニュース{'OK' if 'news' in news_html else '取得済'}")

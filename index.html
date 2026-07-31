@@ -7,7 +7,7 @@
          background: #fffdf7; color: #222; line-height: 1.7; }
   .wrap { max-width: 560px; margin: 0 auto; padding: 20px 14px 60px; }
   h1 { font-size: 34px; text-align: center; margin: 8px 0 2px; }
-  .date { text-align: center; color: #777; font-size: 18px; margin-bottom: 16px; }
+  .date { text-align: center; color: #5c5c5c; font-size: 18px; margin-bottom: 16px; }
   .card { background: #fff; border: 3px solid #e0e0e0; border-radius: 18px;
            padding: 20px; margin-bottom: 16px; }
   .center { text-align: center; }
@@ -26,21 +26,32 @@
           margin: 8px 0; }
   .btn.red { background: #c62828; }
   .btn.green { background: #2e7d32; }
-  .foot { text-align: center; color: #999; font-size: 15px; }
+  .foot { text-align: center; color: #707070; font-size: 15px; }
   .vid { display: flex; gap: 10px; align-items: center; text-decoration: none;
           color: #222; padding: 8px 0; border-bottom: 1px solid #eee; }
   .vid img { width: 148px; border-radius: 10px; flex-shrink: 0; }
   .vt { font-size: 17px; line-height: 1.4; display: block; }
-  .vc { font-size: 14px; color: #999; display: block; margin-left: 6px; }
+  .vc { font-size: 14px; color: #707070; display: block; margin-top: 2px; }
+  .ntime { display: block; font-size: 14px; color: #707070; margin-left: 1em; }
+  .vgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gvid { text-decoration: none; color: #222; display: block; }
+  .gvid img { width: 100%; border-radius: 10px; display: block; }
+  .gvid .vt { font-size: 15px; margin-top: 4px; }
+  .xembeds { margin-top: 10px; }
+  th { text-align: left; font-size: 14px; color: #707070; padding: 4px; border-bottom: 2px solid #ddd; }
+  .note { font-size: 13px; color: #707070; }
+  .tblnote { margin-top: 8px; text-align: center; }
+  .mininote { font-size: 14px; color: #5c5c5c; text-align: center; margin: 4px 0 2px; }
+  h2.sec { font-size: 26px; text-align: center; margin: 26px 0 10px; }
 
   .sister-footer { max-width:560px; margin:24px auto 0; padding:18px 14px 0; border-top:1px solid #e0e0e0;
-    text-align:center; font-size:16px; color:#888; }
+    text-align:center; font-size:16px; color:#5c5c5c; }
   .sister-footer .sister-label { display:block; margin-bottom:10px; font-weight:bold; font-size:17px; }
   .sister-footer a { color:#1565c0; margin:0 10px; text-decoration:underline; line-height:2.2; }
 
 </style></head><body><div class="wrap">
   <h1>⚾ 今日の大谷さん</h1>
-  <div class="date">07月31日 00:43 更新</div>
+  <div class="date">07月31日 14:44 更新</div>
 
   <div class="card">
     <div class="label">7月29日の試合</div>
@@ -48,18 +59,8 @@
     <div class="mid">3打数2安打 1打点</div>
   </div>
 
-  <div class="card">
-    <div class="label">今シーズンの成績</div>
-    <div class="stats">
-      <div>ホームラン<b>23本</b></div>
-      <div>打率<b>.289</b></div>
-      <div>打点<b>65</b></div>
-    </div>
-    <a class="btn green" href="seiseki.html">📊 大谷さんの全成績を見る</a>
-  </div>
-
-  <div class="card">
-    <div class="label">これからの試合(日本時間)</div>
+  <div class="card" style="border-color:#1565c0">
+    <div class="label" style="color:#1565c0; font-weight:bold">📅 これからの試合(日本時間)</div>
     <table><tr><td>8月1日(土)</td><td>11時10分</td><td>Boston Red Sox 戦 </td></tr>
 <tr><td>8月2日(日)</td><td>10時10分</td><td>Boston Red Sox 戦 </td></tr>
 <tr><td>8月3日(月)</td><td>8時20分</td><td>Boston Red Sox 戦 </td></tr>
@@ -71,61 +72,130 @@
   </div>
 
   <div class="card">
-    <div class="label">試合はどこで見られる?</div>
-    <p style="font-size:18px; text-align:center; margin:6px 0 10px">
-      ドジャースの試合は、だいたい<b>NHK BS</b>か<b>ネット配信</b>で見られます
-    </p>
-    <a class="btn" href="https://www.nhk.jp/timetable/" target="_blank">📺 NHKの番組表を確認する</a>
-    <a class="btn" href="https://abema.tv/now-on-air/mlb" target="_blank">📱 ABEMAで見る(ネット)</a>
-    <a class="btn" href="https://www.spotvnow.jp/" target="_blank">🖥 SPOTV NOWで見る(ネット)</a>
+    <div class="label">今シーズンの成績</div>
+    <div class="stats">
+      <div>ホームラン<b>23本</b></div>
+      <div>打率<b>.289</b></div>
+      <div>打点<b>65</b></div>
+    </div>
+    <a class="btn green" href="#zenseiseki">📊 くわしい全成績はこのページの下へ</a>
+  </div>
+
+  <div class="card" style="border-color:#c62828">
+    <div class="label" style="color:#c62828; font-weight:bold">🔥 大谷さんの動画とみんなの反応</div>
+    <div class="vgrid">
+    <p style="font-size:18px;text-align:center">新しい動画を探しています</p>
+    </div>
+    <a class="btn red" href="https://www.youtube.com/results?search_query=%E5%A4%A7%E8%B0%B7%E7%BF%94%E5%B9%B3%20%E3%83%8F%E3%82%A4%E3%83%A9%E3%82%A4%E3%83%88" target="_blank">▶ もっとYouTubeで見る</a>
+    <div class="xembeds">
+    
+    </div>
+    <a class="btn" href="https://x.com/search?q=%E5%A4%A7%E8%B0%B7%E7%BF%94%E5%B9%B3&f=live" target="_blank">💬 Xでみんなの反応をもっと見る</a>
   </div>
 
   <div class="card">
     <div class="label">大谷さんのニュース</div>
-    <a class="news" href="https://news.google.com/rss/articles/CBMif0FVX3lxTE1DUVR5RHIybWhPMG1penFuQnhKUlppaktwSkxsc2czNEl4dENvUklrRlZxdHVwX0RySmtaZEZtT1RlcUpmM3lvMVJ4U1VqRWJYdUxQUWdjSWU0QzZDUU9aZkQ2WnBTM2ttNnVMMDBUZFF1LW1XUzA1WXZPU29XQ1E?oc=5" target="_blank">・大谷翔平の“歴代１位”記録をあっさり…レブロンが移籍直後に全スポーツ史上最多更新！44年ぶり悲願成就への期待高まる - news.yahoo.co.jp</a>
-<a class="news" href="https://news.google.com/rss/articles/CBMif0FVX3lxTFBZTXE1dzlVWUtVY19VbUNZV2VObDF2MDFUS0lNS1YzcEJFWmVXY2w0cWMyaHdhYTJJT25PeG84bkp6cWd4ZE9ZUnlPNTJ5YTNrSW5zT2ktWTQzMVF3WDR2enIwaS1WRDgwQXNlVlhoQUtCY25zTlZlcUoxMzYxdk3SAYQBQVVfeXFMUFFyNll5V19uOGdUZ3lUbWNEZjRQRHE2dGw3SGEzUVVxLU11dHRCVFE5aGoyRHdJRGkzTFY0eDVPOUZUakl3NDRacC1HZUdaRF9ndFpoT0ZSVE1wMXltZWYyQlkwWDFXcE1ORWREVDVJZzlPVDJhWWQ0Nnl6ZF8zei1tM29V?oc=5" target="_blank">・大谷翔平が“歴代1位”陥落　1143億円契約からわずか3年…レジェンドに敗北 - ｄメニューニュース</a>
-<a class="news" href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE9jRHpRWjhFM0JRQ19Kcnh0ODluU2xTVnloUTZvQkNoYmhnU0FLZFlqWm94Nl9hY3NmbDRqakhIUzVOZ1FuOS15UXZLajN0VkN3TC1xLUdnbzVEUFlFZmc?oc=5" target="_blank">・大谷翔平のユニホーム売上記録をレブロンが塗り替える (2026年7月30日掲載) - ライブドアニュース</a>
-<a class="news" href="https://news.google.com/rss/articles/CBMid0FVX3lxTFBNZDItZC1udW9LWExiU0Vlb2pxVElWZ2FIVnd4b1hudkNBZE1oRUZ3aElWa21sM0NaVHgxZEQ3SWtsZDFINTlPSGw0OTUwTWZZcTg2NHdzWHdPVlFmelY2alZkbHpsUmRZeEozWnZmRWp4SFpNRjY4?oc=5" target="_blank">・《独自》水原一平、“大学詐称”はおろか高校も卒業していなかった…！ 高校はHPの「卒業者紹介」欄から削除…深まる「大谷翔平とエンゼルスはなぜ気づかなかったのか」の謎 - news-postseven.com</a>
-<a class="news" href="https://news.google.com/rss/articles/CBMif0FVX3lxTE5JV2FRcDE4WmZpcXdWRXhzLWpPQ09QZnREZVNEcVJmQ1lLcTZ1YXUyUVNGNEhGZzV4bGk0bTFjQnhXS29ucmpBLXljc3V4bWNGRVMzMVZXeGdoT25XZlc4VWJHbE5pTjExYml2dl9DcU1TcEpNMHBfNmRwVWhLcVU?oc=5" target="_blank">・水原一平受刑者インタビュー 大谷翔平のギャンブル嫌いを証明「お金に困ってない」＝米報道（東スポWEB） - news.yahoo.co.jp</a>
-<a class="news" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTFB2U2JudTRTWkhpVFlMamNubWU1VVJYd21zUjloZHM4bnlIRkRZUDNsSzV0cV9obUpjSWV3TkY3MUdraTJGcm5DOUl3S3VBdkp3OWZWUW5jLV9iVHd2Vm04?oc=5" target="_blank">・水原一平受刑者「違法賭博送金」発覚直前の音声インタビューが公開…低い声で淡々と語られた大谷翔平の“真実” - ライブドアニュース</a>
+    <a class="news" href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE16T2IxMnJ6TG5ES2Q3R1I2VGdHaDB0Nm96cGh5TTBQU3dZYnNwUG8zWHNFZktYaW5rRnB4VHNQSGpQalRRWjZCVVZ2c3NZdGRkNk5ielF6YlhEUXJHcVFv?oc=5" target="_blank">・ドジャース大谷 先発外れる ロバーツ監督「左ひざ痛みのため」 - NHKニュース<span class="ntime">7月31日 9時56分 配信</span></a>
+<a class="news" href="https://news.google.com/rss/articles/CBMifkFVX3lxTE1HTmlPNFI1WHBPeVNOSU0xLUs1dlZUai1OakVGY2ZHcFN2WEtQaVoxQnVHekNiMkxIM0tZU2QzOHRTOVNYU0ZPSXFpVzA0c2g4UWs1OVVRZzNzLW5ueUZHaVFFQUo3SjdjWWplUUJJZGgxdkZ6cmtyQnF2ZzNVUQ?oc=5" target="_blank">・大谷翔平は「あし体」 選手の飛躍助ける鴻江理論…「2つ」のタイプで異なるアプローチ - article.auone.jp<span class="ntime">7月31日 10時28分 配信</span></a>
+<a class="news" href="https://news.google.com/rss/articles/CBMi1gFBVV95cUxQM2FSNHJoZ3E4dGppZWNucXJFQzQzY1JoUFE5QUxfcC1WZTZ0dzIwNVMtNXdRUWoxQ1dhQjBqWDdsTEN5cW5rSjlwcElsV2dBMURtZmF4YzNmdWVTYUNkSmxzdG5ibE12eGp6cHVDOXNkdGo2YVJiZlRmcmpJSW01aThQQVJ4elNuYWswM0NidVExMlRSS1FMMzcwekpBWUpjR1V2cUNNcUwyeWlwOGo1WjZSQ0tOUEdPWDNqYWdIWGNKdUhpcUlRb1JGVnRfOUFMOVNjUjBR0gGEAUFVX3lxTE8waExiUXI3UExjZUF5TG50NV9fUjVMcmVpUlNqN1hZUU9fdGhEamRaUnBwdm5WLWJJOGVXT3RoQ2V4WGVHQ0RfZ1JKLTZ5LU5zWDU0UUZIMnN2ZDA0OFVoWTdBREJXYV81cTZHWjVKOHZiZ2t3ckVHT2JIaUpZbXNQbXFUWA?oc=5" target="_blank">・大谷翔平は「あし体」　選手の飛躍助ける鴻江理論…「2つ」のタイプで異なるアプローチ - topics.smt.docomo.ne.jp<span class="ntime">7月31日 10時20分 配信</span></a>
+<a class="news" href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE0tZVVqYXY3aXJVbTBYV3VVUEVVMmJiRDJmdHFUZzAxa3VUYWljWEF5cGVPWmdvdkZGWjBqNnFTd21ZN2JlUTFpbGJMeXp2X3J6R25uWXdJcUhwTzFCdHc?oc=5" target="_blank">・大谷翔平は「あし体」 選手の飛躍助ける鴻江理論…「2つ」のタイプで異なるアプローチ (2026年7月31日掲載) - ライブドアニュース<span class="ntime">7月31日 10時20分 配信</span></a>
+<a class="news" href="https://news.google.com/rss/articles/CBMid0FVX3lxTE1lVUl0ajh3bkJMeTVDTExNX2JUcHFycWJFZGNFcENxbEpNMXRQa2lNd2MzWDBsdndHeTRTcVVoYnRHY0E2QWRxOWRpODN6TEFKRnp0S3J0VllXbnFSaXlXOXI3dXNjUWFOZWZqc3lQd1RwQTZwd2pn?oc=5" target="_blank">・《模範囚として刑期が短縮》水原一平受刑者が急ぐ“出所後の準備” 米ポッドキャストではインタビューも公開、法の網をかいくぐって大谷との関係をネタに稼ぐ可能性も - NEWSポストセブン<span class="ntime">7月31日 7時00分 配信</span></a>
+<a class="news" href="https://news.google.com/rss/articles/CBMif0FVX3lxTFBRUjBxOXdlR3hNZlJNVzNpRURBUGp4QVN2ZzJtbXlxNFhqMTl2Z3psODlmNDVOenZFNEVpMG4xNHY0cXh0VFo4NlU4LVZoQ2V2a0daSGhJVGtqdEI3UVlDVjIwbEhSSkpuMnNmZENNdHpncFJFWkdSWUpPekI0M2M?oc=5" target="_blank">・「命を賭けて…」大谷翔平の元通訳・水原一平氏、独占インタビューで語った衝撃の“嘘と真実”（週刊女性PRIME） - news.yahoo.co.jp<span class="ntime">7月30日 7時00分 配信</span></a>
 
+  </div>
+
+
+  <h2 class="sec" id="zenseiseki">📊 大谷さんの全成績</h2>
+  <div class="date">2026年07月31日 14:44 時点(MLB公式StatsAPIより取得)</div>
+
+  <div class="card">
+    <div class="label">今シーズンの基本成績</div>
+    <div class="stats" style="flex-wrap:wrap">
+      <div>打率<b>.289</b></div>
+      <div>本塁打<b>23本</b></div>
+      <div>打点<b>65</b></div>
+      <div>OPS<b>.931</b></div>
+      <div>盗塁<b>6</b></div>
+    </div>
+    <div class="note tblnote">OPS=出塁率+長打率。打者の総合力を表す指標で、.900あれば一流の目安です</div>
   </div>
 
   <div class="card">
-    <div class="label">大谷さんの最新動画(押すと再生)</div>
-    <a class="vid" href="https://www.youtube.com/watch?v=iaxfzrhR72o" target="_blank">
-      <img src="https://i.ytimg.com/vi/iaxfzrhR72o/mqdefault.jpg" alt="" loading="lazy">
-      <span class="vt">300 reasons to love Shohei! #dodgers #sports #losangeles</span><span class="vc">ドジャース公式</span></a>
-<a class="vid" href="https://www.youtube.com/watch?v=Ft7UAbTKnF8" target="_blank">
-      <img src="https://i.ytimg.com/vi/Ft7UAbTKnF8/mqdefault.jpg" alt="" loading="lazy">
-      <span class="vt">Mariners vs. Dodgers Game Highlights (7/29/26) | MLB Highlights</span><span class="vc">ドジャース公式</span></a>
-<a class="vid" href="https://www.youtube.com/watch?v=bnNQNqD30RY" target="_blank">
-      <img src="https://i.ytimg.com/vi/bnNQNqD30RY/mqdefault.jpg" alt="" loading="lazy">
-      <span class="vt">MARINERS vs. DODGERS: Official Full Game Highlights (July 29) | 2026 MLB Season</span><span class="vc">MLB公式</span></a>
-<a class="vid" href="https://www.youtube.com/watch?v=JGoB9HM-_00" target="_blank">
-      <img src="https://i.ytimg.com/vi/JGoB9HM-_00/mqdefault.jpg" alt="" loading="lazy">
-      <span class="vt">Dodgers vs. Mets Game Highlights (7/25/26) | MLB Highlights</span><span class="vc">ドジャース公式</span></a>
-<a class="vid" href="https://www.youtube.com/watch?v=Eov0MQ909CI" target="_blank">
-      <img src="https://i.ytimg.com/vi/Eov0MQ909CI/mqdefault.jpg" alt="" loading="lazy">
-      <span class="vt">Dodgers vs. Mets Game Highlights (7/24/26) | MLB Highlights</span><span class="vc">ドジャース公式</span></a>
-<a class="vid" href="https://www.youtube.com/watch?v=I6nKOzARbVU" target="_blank">
-      <img src="https://i.ytimg.com/vi/I6nKOzARbVU/mqdefault.jpg" alt="" loading="lazy">
-      <span class="vt">Dodgers vs. Phillies Game Highlights (7/22/26) | MLB Highlights</span><span class="vc">ドジャース公式</span></a>
-
-    <a class="btn red" href="https://www.youtube.com/results?search_query=%E5%A4%A7%E8%B0%B7%E7%BF%94%E5%B9%B3%20%E3%83%8F%E3%82%A4%E3%83%A9%E3%82%A4%E3%83%88" target="_blank">▶ もっとYouTubeで見る</a>
-    <a class="btn" href="https://x.com/search?q=%E5%A4%A7%E8%B0%B7%E7%BF%94%E5%B9%B3&f=live" target="_blank">💬 Xでみんなの反応を見る</a>
+    <div class="label">状況別の打率</div>
+    <table>
+      <tr><th>場面</th><th>打率</th><th>打数</th><th>本塁打</th><th>打点</th></tr>
+      <tr><td><b>ホーム(本拠地)</b><br><span class='note'>自分のチームの球場での成績</span></td><td>.293</td><td>164</td><td>14</td><td>25</td></tr>
+<tr><td><b>ビジター(遠征)</b><br><span class='note'>相手チームの球場での成績</span></td><td>.287</td><td>216</td><td>9</td><td>40</td></tr>
+<tr><td><b>対左投手</b><br><span class='note'>左投げの投手と対戦した時の成績</span></td><td>.274</td><td>124</td><td>9</td><td>21</td></tr>
+<tr><td><b>対右投手</b><br><span class='note'>右投げの投手と対戦した時の成績</span></td><td>.297</td><td>256</td><td>14</td><td>44</td></tr>
+<tr><td><b>得点圏</b><br><span class='note'>ランナーが2塁か3塁にいる場面。チャンスに強いかが分かる</span></td><td>.299</td><td>77</td><td>4</td><td>41</td></tr>
+<tr><td><b>満塁</b><br><span class='note'>ランナーが1・2・3塁すべてにいる場面。一番のチャンス</span></td><td>.500</td><td>6</td><td>0</td><td>10</td></tr>
+<tr><td><b>終盤の接戦</b><br><span class='note'>試合終盤で点差が少ない、緊迫した場面</span></td><td>.241</td><td>29</td><td>0</td><td>3</td></tr>
+    </table>
   </div>
+
+  <div class="card">
+    <div class="label">月別成績</div>
+    <table>
+      <tr><th>月</th><th>打率</th><th>本塁打</th><th>打点</th><th>OPS</th></tr>
+      <tr><td><b>3月</b></td><td>.200</td><td>0</td><td>0</td><td>.655</td></tr>
+<tr><td><b>4月</b></td><td>.284</td><td>6</td><td>13</td><td>.934</td></tr>
+<tr><td><b>5月</b></td><td>.289</td><td>4</td><td>18</td><td>.892</td></tr>
+<tr><td><b>6月</b></td><td>.333</td><td>8</td><td>19</td><td>1.091</td></tr>
+<tr><td><b>7月</b></td><td>.265</td><td>5</td><td>15</td><td>.844</td></tr>
+    </table>
+    <div class="note tblnote">月ごとの成績です。調子の波や好不調が分かります</div>
+  </div>
+
+  <div class="card">
+    <div class="label">直近10試合の結果</div>
+    <table>
+      <tr><th>日付</th><th>対戦相手</th><th>結果</th></tr>
+      <tr><td>7/29</td><td>Seattle Mariners</td><td>2-3 | 2B, BB, K</td></tr>
+<tr><td>7/28</td><td>Seattle Mariners</td><td>3-4 | HR, 2B, BB</td></tr>
+<tr><td>7/26</td><td>New York Mets</td><td>1-4 | 2B, 2 K</td></tr>
+<tr><td>7/25</td><td>New York Mets</td><td>0-5 | K</td></tr>
+<tr><td>7/24</td><td>New York Mets</td><td>2-4 | 2B, K, RBI</td></tr>
+<tr><td>7/22</td><td>Philadelphia Phillies</td><td>0-4 | BB</td></tr>
+<tr><td>7/21</td><td>Philadelphia Phillies</td><td>1-4 | 2 K</td></tr>
+<tr><td>7/20</td><td>Philadelphia Phillies</td><td>0-4 | BB, 2 K</td></tr>
+<tr><td>7/19</td><td>New York Yankees</td><td>1-4 | K</td></tr>
+<tr><td>7/19</td><td>New York Yankees</td><td>2-5 | 2B, K, 2 RBI</td></tr>
+    </table>
+    <div class="note tblnote">最新の試合が一番上です。数字は「打数-安打」、Kは三振</div>
+  </div>
+  <div class="card">
+    <div class="label">投手成績(今シーズン14登板)</div>
+    <div class="stats">
+      <div>防御率<b>1.79</b></div>
+      <div>勝敗<b>8勝2敗</b></div>
+      <div>奪三振<b>95</b></div>
+    </div>
+    <div class="mininote">投球回 85.2 / WHIP 0.95(1イニングあたりの走者数、低いほど良い)</div>
+    <div class="note tblnote">防御率(ERA)=9イニングあたりの平均失点。数字が低いほど好投しているということです</div>
+    <table class="mt">
+      <tr><th>日付</th><th>対戦相手</th><th>結果</th></tr>
+      <tr><td>7/3</td><td>San Diego Padres</td><td>6.0 IP, 3 ER, 9 K, 2 BB</td></tr>
+<tr><td>6/24</td><td>Minnesota Twins</td><td>6.0 IP, 2 ER, 8 K, 2 BB</td></tr>
+<tr><td>6/17</td><td>Tampa Bay Rays</td><td>6.0 IP, 4 ER, 5 K, BB</td></tr>
+<tr><td>6/10</td><td>Pittsburgh Pirates</td><td>6.2 IP, 3 ER, 6 K, 3 BB</td></tr>
+<tr><td>6/3</td><td>Arizona Diamondbacks</td><td>6.0 IP, 0 ER, 6 K, BB</td></tr>
+    </table>
+    <div class="note tblnote">直近の登板結果です。IP=投球回、ER=自責点、K=奪三振、BB=四球</div>
+  </div>
+
 
   <div class="card">
     <div class="label">日本人メジャーリーガーの成績</div>
     <table><tr><td><b>山本由伸</b></td><td>防御率 2.72 / 11勝6敗 / 奪三振 118</td></tr>
-<tr><td><b>佐々木朗希</b></td><td>防御率 4.71 / 4勝5敗 / 奪三振 94</td></tr>
+<tr><td><b>佐々木朗希</b></td><td>防御率 4.64 / 5勝5敗 / 奪三振 101</td></tr>
 <tr><td><b>今永昇太</b></td><td>防御率 3.72 / 7勝8敗 / 奪三振 113</td></tr>
-<tr><td><b>鈴木誠也</b></td><td>打率 .272 / HR 18本 / 打点 60</td></tr>
+<tr><td><b>鈴木誠也</b></td><td>打率 .270 / HR 18本 / 打点 60</td></tr>
 <tr><td><b>千賀滉大</b></td><td>防御率 8.85 / 0勝7敗 / 奪三振 49</td></tr>
-<tr><td><b>吉田正尚</b></td><td>打率 .261 / HR 4本 / 打点 19</td></tr></table>
+<tr><td><b>吉田正尚</b></td><td>打率 .260 / HR 4本 / 打点 19</td></tr></table>
+    <div class="note tblnote">米国時間 7月30日 の試合終了分まで反映(日本の朝に更新すると前夜の米国の試合結果が入ります)</div>
   </div>
 
   <div class="foot">非公式のファン情報ページです / 成績: MLB公式データより自動取得</div>
   
-</div></body></html>
+</div><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "be81dd55e4c042b09b9763edd4863484"}'></script></body></html>
