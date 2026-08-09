@@ -72,7 +72,7 @@ pick_html = f"""
     <div class="picksubs">チャンネル登録 {esc(pick['subs'])}</div>
     <div class="pickcomment">{esc(pick['comment'])}</div>
     <a class="pickvid" href="{video_url(pv)}" target="_blank" rel="noopener">
-      <img src="{thumb(pv, 'sddefault')}" alt="最新動画のサムネイル" loading="lazy">
+      <img src="{thumb(pv, 'sddefault')}" alt="最新動画のサムネイル">
       <span class="pickvt">▶ 最新動画({pv['date']}): {esc(pv['title'])}</span>
     </a>
     <a class="btn red" href="{channel_url(pick)}" target="_blank" rel="noopener">📺 このチャンネルを見に行く</a>
@@ -81,11 +81,20 @@ pick_html = f"""
 """
 
 # ---- 一覧: 登録者規模別 ----
+# 表示速度対策(2026-08-10): イチ推し(上のpick_html)で1枚すでに即時読み込み済みなので、
+# ここでは先頭3枚だけ即時読み込みのまま、以降はlazy+decoding=asyncにする。
+LAZY_SKIP = 3
+_lazy_ctr = {"n": 0}
+
+
 def card(c):
     v = c.get("latest")
     if v:
+        n = _lazy_ctr["n"]
+        _lazy_ctr["n"] += 1
+        attrs = "" if n < LAZY_SKIP else ' loading="lazy" decoding="async"'
         vhtml = f"""<a class="chvid" href="{video_url(v)}" target="_blank" rel="noopener">
-        <img src="{thumb(v)}" alt="" loading="lazy"><span class="chvt">▶ {pv_date(v)}: {esc(v['title'][:60])}{'…' if len(v['title']) > 60 else ''}</span></a>"""
+        <img src="{thumb(v)}" alt=""{attrs}><span class="chvt">▶ {pv_date(v)}: {esc(v['title'][:60])}{'…' if len(v['title']) > 60 else ''}</span></a>"""
     else:
         vhtml = ""
     return f"""
