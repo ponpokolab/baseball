@@ -171,7 +171,7 @@ for pub, title, vid, chname, _p in vids[:12]:
     except Exception:
         pass
     vids_html += f'''<a class="gvid" href="https://www.youtube.com/watch?v={vid}" target="_blank">
-      <img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy" decoding="async">
+      <img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy">
       <span class="vt">{title}</span><span class="vc">{chname}{" ・ " + ptxt if ptxt else ""}</span></a>\n'''
 
 # ---- お気に入り動画(相棒が「お気に入り動画.txt」にURLを1行ずつ足す方式) ----
@@ -191,7 +191,7 @@ try:
             continue
         vid = m.group(1)
         fav_html += f'''<a class="gvid" href="https://www.youtube.com/watch?v={vid}" target="_blank">
-          <img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy" decoding="async">
+          <img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy">
           <span class="vt">{comment if comment else "お気に入りの1本"}</span></a>\n'''
     if fav_html:
         favs_card_html = f'''<div class="card" style="border-color:#e8a33d">
@@ -504,7 +504,7 @@ def _card(label, body):
 vids_app = ""
 for pub, title, vid, chname, _p in vids[:3]:
     vids_app += (f'<a class="vid" href="https://www.youtube.com/watch?v={vid}" target="_blank">'
-                 f'<img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy" decoding="async">'
+                 f'<img src="https://i.ytimg.com/vi/{vid}/mqdefault.jpg" alt="" loading="lazy">'
                  f'<span class="vt">{title}</span></a>')
 cards = [
     _card("きょうの天気(" + WX_NAME + ")", wx_html),
